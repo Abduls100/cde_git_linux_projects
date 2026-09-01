@@ -23,3 +23,22 @@ GOLD_DIR="$GOLD_DIR/2023_year_finance.csv"
 
 echo "ETL run started: $(date '+%Y-%m-%d %H:%M:%S')"
 
+#STEP 1 - EXTRACT: download the CSV into raw/
+
+#
+
+echo ""
+echo "[EXTRACT] Donwloading CSV from \$CSV_URL .."
+
+mkdir -p "$RAW_DIR"
+
+curl -sSL -o "$RAW_FILE" "CSV_URL"
+
+#Confirm the file arrived and not empty before moving on
+if [[ -f" $RAW_FILE" && -s "$RAW_FILE" ]]; then
+   echo "[EXTRACT] SUCCESS: file save to $RAW_FILE"
+   echo "[EXTRACT] Row count (incl. header): $(wc -l < "RAW_FILE")"
+else
+  echo "[EXTRACT] ERROR: download failed or file is empty." >&2
+  exit 1
+fi
