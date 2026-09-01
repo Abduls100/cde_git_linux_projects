@@ -87,3 +87,20 @@ NR==1 {
     next
 }
 
+# STEP 3 — LOAD: copy the transformed file into Gold/
+
+echo ""
+echo "[LOAD] Loading transformed data into $GOLD_DIR ..."
+ 
+mkdir -p "$GOLD_DIR"
+cp "$TRANSFORMED_FILE" "$GOLD_FILE"
+ 
+if [[ -f "$GOLD_FILE" && -s "$GOLD_FILE" ]]; then
+    echo "[LOAD] SUCCESS: file saved to $GOLD_FILE"
+else
+    echo "[LOAD] ERROR: load step failed." >&2
+    exit 1
+fi
+
+echo ""
+echo " ETL run finished: $(date '+%Y-%m-%d %H:%M:%S')"
