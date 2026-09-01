@@ -42,3 +42,48 @@ else
   echo "[EXTRACT] ERROR: download failed or file is empty." >&2
   exit 1
 fi
+
+#STEP 2 - TRANSFORM: rename Variable_code -> variable code, select 4 columns
+
+
+echo ""
+echo "[TRANSFORM] Renaming 'Variable_code' -> 'variable_code' and selecting columns..."
+
+mkdir -p "$TRANSFORMED_DIR"
+
+# We look up each source column by name (case-insensitive) instead of hardcoding
+# a column number, so the script keeps working even if the source file's column
+# order changes in a future release.
+
+awk -F',' '
+BEGIN { OFS="," }
+NR==1 {
+    for (i=1; i<=NF; i++) {
+        name=$i
+        gsub(/\r/,"",name)                    # strip stray carriage returns
+        if (tolower(name)=="year")          year_i=i
+        if (tolower(name)=="value")         value_i=i
+        if (tolower(name)=="units")         units_i=i
+        if (tolower(name)=="variable_code") varcode_i=i
+    }
+    # This header line IS the rename: Variable_code -> variable_code
+    print "year", "Value", "Units", "variable_code"
+    next
+}
+
+awk -F',' '
+BEGIN { OFS="," }
+NR==1 {
+    for (i=1; i<=NF; i++) {
+        name=$i
+        gsub(/\r/,"",name)                    # strip stray carriage returns
+        if (tolower(name)=="year")          year_i=i
+        if (tolower(name)=="value")         value_i=i
+        if (tolower(name)=="units")         units_i=i
+        if (tolower(name)=="variable_code") varcode_i=i
+    }
+    # This header line IS the rename: Variable_code -> variable_code
+    print "year", "Value", "Units", "variable_code"
+    next
+}
+
