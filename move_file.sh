@@ -14,3 +14,12 @@ echo "Move CSV/JSON run started: $(date '+%Y-%m-%d %H:%M:%S')"
 echo "[MOVE] Source folder: $SOURCE_DIR"
 echo "[MOVE} Destination folder: $DEST_DIR"
 
+#STEP 1 - VALIDATE: check and ensure the source folder actually exists
+
+if [[ ! -d "$SOURCE_DIR" ]]; then
+   echo "[MOVE] ERROR: source folder '$SOURCE_DIR' does not exist." >$2 exit 1
+fi
+
+makdir -p "$DEST_DIR"
+
+
