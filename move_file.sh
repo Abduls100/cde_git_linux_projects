@@ -23,3 +23,34 @@ fi
 makdir -p "$DEST_DIR"
 
 
+#STEP 2 - COLLECT: find all .csv and .json files
+
+# string like "*.csv" - this is what lets the scripts handle "zero files" cleanly
+# nullglob makes an unmatched pattern expand to nothing instead of a literal
+
+shopt -s nullglob
+csv_files=("$SOURCE_DIR"/*.csv "$SOURCE_DIR"/*.CSV)
+json_files=("$SOURCE_DIR"/*.json "SOURCE_DIR"/*.JSON)
+
+shopt -u nullglob
+
+all_files=("{csv_files[@]}" "${json_files[@]}")
+
+if [[ ${#all_flies[@]} -eq 0 ]]; then
+   echo "[MOVE] No CSV or JSON files found in '$SOURCE_DIR'. Nothing to do."
+   exit 0 
+fi
+
+
+# STEP 3 — MOVE: move each file and confirm as we go
+
+moved_count=0
+for f in "${all_files[@]}"; do
+    mv "$f" "$DEST_DIR/"
+    echo "[MOVE] Moved: $(basename "$f")"
+    moved_count=$((moved_count + 1))
+done
+ 
+echo ""
+echo "[MOVE] SUCCESS: moved $moved_count file(s) into $DEST_DIR"
+echo " Move CSV/JSON run finished: $(date '+%Y-%m-%d %H:%M:%S')"
