@@ -43,36 +43,66 @@ else
 fi
 
 # STEP 2 — TRANSFORM: rename Variable_code -> variable_code, select 4 columns
-
+# ==============================================================================
 echo ""
 echo "[TRANSFORM] Renaming 'Variable_code' -> 'variable_code' and selecting columns..."
-
+ 
 mkdir -p "$TRANSFORMED_DIR"
-
+ 
 # We look up each source column by name (case-insensitive) instead of hardcoding
 # a column number, so the script keeps working even if the source file's column
 # order changes in a future release.
-awk -F',' '
-BEGIN { OFS="," }
-NR==1 {
-    for (i=1; i<=NF; i++) {
-        name=$i
-        gsub(/\r/,"",name)                    # strip stray carriage returns
-        if (tolower(name)=="year")          year_i=i
-        if (tolower(name)=="value")         value_i=i
-        if (tolower(name)=="units")         units_i=i
-        if (tolower(name)=="variable_code") varcode_i=i
+#
+# IMPORTANT: plain "-F,'" splitting breaks on quoted fields that contain a
+# comma — e.g. a Value field like "1,523" (thousands separator) gets split
+# into two fields, silently corrupting every column after it. The function
+# below is a minimal hand-rolled CSV parser: it walks the line character by
+# character and only treats a comma as a field separator when it's OUTSIDE
+# a pair of double quotes. This is plain POSIX awk — no gawk-only features
+# like FPAT — so it runs identically under mawk or gawk.
+awk '
+function split_csv(line,    result, i, c, field, in_quotes, n) {
+    n = 0
+    field = ""
+    in_quotes = 0
+    for (i = 1; i <= length(line); i++) {
+        c = substr(line, i, 1)
+        if (c == "\"") {
+            in_quotes = !in_quotes
+            continue
+        }
+        if (c == "," && !in_quotes) {
+            result[++n] = field
+            field = ""
+        } else {
+            field = field c
+        }
     }
-    # This header line IS the rename: Variable_code -> variable_code
-    print "year", "Value", "Units", "variable_code"
-    next
+    result[++n] = field
+    for (i = 1; i <= n; i++) csv_fields[i] = result[i]
+    return n
 }
 {
-    gsub(/\r/,"")
-    print $year_i, $value_i, $units_i, $varcode_i
+    gsub(/\r/, "")
+    n = split_csv($0, dummy)
+    if (NR == 1) {
+        for (i = 1; i <= n; i++) {
+            name = csv_fields[i]
+            if (tolower(name) == "year")          year_i = i
+            if (tolower(name) == "value")         value_i = i
+            if (tolower(name) == "units")         units_i = i
+            if (tolower(name) == "variable_code") varcode_i = i
+        }
+        # This header line IS the rename: Variable_code -> variable_code
+        print "year,Value,Units,variable_code"
+        next
+    }
+    v = csv_fields[value_i]
+    gsub(/,/, "", v)   # strip thousands-separator commas from the numeric value itself
+    print csv_fields[year_i] "," v "," csv_fields[units_i] "," csv_fields[varcode_i]
 }
 ' "$RAW_FILE" > "$TRANSFORMED_FILE"
-
+ 
 if [[ -f "$TRANSFORMED_FILE" && -s "$TRANSFORMED_FILE" ]]; then
     echo "[TRANSFORM] SUCCESS: file saved to $TRANSFORMED_FILE"
     echo "[TRANSFORM] Row count (incl. header): $(wc -l < "$TRANSFORMED_FILE")"
@@ -80,6 +110,7 @@ else
     echo "[TRANSFORM] ERROR: transform step failed." >&2
     exit 1
 fi
+ 
 
 # STEP 3 — LOAD: copy the transformed file into Gold/
 
