@@ -1,0 +1,23 @@
+# CDE Exercise — cron schedule for etl.sh
+#
+# This runs etl.sh once daily at 01:00 and appends both stdout and stderr
+# to a log file, so you have a record of every run without cluttering
+# your terminal.
+#
+# --- How to install ---
+# 1. Get your repo's absolute path:
+#      cd ~/cde_git_linux_projects && pwd
+# 2. Replace /home/abdul/cde_git_linux_projects below with that path (both places).
+# 3. Open your crontab editor:
+#      crontab -e
+# 4. Paste the line below (without the leading '#'), save, and exit.
+# 5. Confirm it's installed:
+#      crontab -l
+#
+# --- Why absolute paths ---
+# Cron runs with a minimal environment — no PATH, no $HOME shortcuts,
+# and no "current directory" the way an interactive shell has. A relative
+# path like "./etl.sh" will fail silently. Always use full paths for both
+# the script and the log file.
+
+0 1 * * * /home/abdul/cde_git_linux_projects/etl.sh >> /home/abdul/cde_git_linux_projects/etl.log 2>&1
